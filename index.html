@@ -377,8 +377,6 @@
         <span class="sr-nums">
           <span class="sr-collabel real">Real</span>
           <span class="sr-sep">/</span>
-          <span class="sr-collabel compromiso">Compr.</span>
-          <span class="sr-sep">/</span>
           <span class="sr-collabel total">Total</span>
         </span>
         <span class="sr-pctchip">0%</span>
@@ -463,7 +461,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.41.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.42.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -831,6 +829,41 @@
     ));
   }
 
+  // El compromiso ya fijado (candado de la junta de la mañana) no se debe poder
+  // "mover" en silencio — pero tampoco tiene caso dejarlo imposible de corregir
+  // si de plano se capturó mal. Se puede editar, pero siempre pidiendo el motivo,
+  // igual que Rechazado en Crecimiento — así queda un rastro de quién cambió qué
+  // y por qué, en vez de que el número cambie sin explicación entre la mañana y la noche.
+  function openCompromisoEditModal(key){
+    const m = METRIC_BY_KEY[key];
+    const d = marcador.metrics[key];
+    const curVal = d.compromiso;
+    const curDisplay = curVal!==null && curVal!==undefined ? fmtMoneyEdit(curVal) : '';
+    const bodyHTML = `El compromiso de <b>${escapeHTML(m.label)}</b> ya quedó fijado hoy a las <b>${escapeHTML(marcador.fijadoAt||'--')}</b>. Para cambiarlo anota el motivo — así no se puede "mover la meta" sin que quede registro.
+      <div style="margin-top:10px;">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px;">Nuevo compromiso ($)</label>
+        <input type="text" inputmode="decimal" id="compromisoEditValueInput" value="${escapeHTML(curDisplay)}" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:16px;font-family:inherit;">
+      </div>`;
+    showCrecConfirm(
+      'Editar compromiso bloqueado',
+      bodyHTML,
+      'Guardar cambio',
+      (reason)=>{
+        const valInput = document.getElementById('compromisoEditValueInput');
+        const raw = valInput ? cleanMoneyInput(valInput.value) : '';
+        const newVal = (raw===''||raw==='-') ? null : Number(raw);
+        if(!marcador.compromisoLog) marcador.compromisoLog = [];
+        marcador.compromisoLog.push({ts:new Date().toISOString(), key, label:m.label, oldVal:curVal, newVal, reason});
+        marcador.metrics[key].compromiso = newVal;
+        saveMarcador();
+        renderMetrics();
+        toast('Compromiso actualizado — motivo guardado');
+      },
+      null,
+      true // motivo obligatorio
+    );
+  }
+
   function renderMetrics(){
     marcador.metrics.desembolso.real = calcDesembolsoReal(fechaInput.value);
     marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
@@ -868,7 +901,8 @@
         ${(isMoney && !realDisabled) ? `<button type="button" class="sr-sign-toggle" data-action="sign-toggle" data-key="${m.key}" data-field="real" title="Cambiar a negativo/positivo — para cuando sube en vez de bajar">±</button>` : ''}
         ${m.noCompromiso ? '' : `<span class="sr-sep">/</span>
         ${dollarCompromiso}<input type="${inType}" ${minAttr} inputmode="${inMode}" class="sr-input sr-compromiso${moneyCls}" data-field="compromiso" data-key="${m.key}" value="${compromisoVal}" ${compromisoDisabled?'disabled':''} placeholder="0">
-        ${(isMoney && !compromisoDisabled) ? `<button type="button" class="sr-sign-toggle" data-action="sign-toggle" data-key="${m.key}" data-field="compromiso" title="Cambiar a negativo/positivo">±</button>` : ''}`}
+        ${(isMoney && !compromisoDisabled) ? `<button type="button" class="sr-sign-toggle" data-action="sign-toggle" data-key="${m.key}" data-field="compromiso" title="Cambiar a negativo/positivo">±</button>` : ''}
+        ${(compromisoDisabled && !m.auto) ? `<button type="button" class="sr-sign-toggle" data-action="edit-locked-compromiso" data-key="${m.key}" title="El compromiso ya quedó fijado — para cambiarlo hay que anotar el motivo">✏️</button>` : ''}`}
         ${m.hasTotal ? `<span class="sr-sep">/</span>
         ${dollarTotal}<input type="${inType}" ${minAttr} inputmode="${inMode}" class="sr-input sr-total${moneyCls}" data-field="total" data-key="${m.key}" value="${totalVal}" ${totalDisabled?'disabled':''} placeholder="0">` : ''}
         ${m.auto ? `<span class="sr-auto-tag" title="Se calcula solo desde Crecimiento">auto</span>` : ''}
@@ -922,6 +956,9 @@
         saveMarcador();
         renderMetrics();
       });
+    });
+    wrap.querySelectorAll('[data-action="edit-locked-compromiso"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openCompromisoEditModal(btn.dataset.key));
     });
 
     renderLockbar();
@@ -2232,7 +2269,7 @@
     doc.setFont(undefined,'bold'); doc.setFontSize(12); doc.setTextColor(28,43,57);
     doc.text('MARCADOR DIARIO', marginL, y); y+=6;
     doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(90,100,110);
-    doc.text(marcador.fijado ? `Compromisos fijados a las ${marcador.fijadoAt} · real/compromiso/total` : 'Compromisos aún sin fijar hoy', marginL, y); y+=14;
+    doc.text(marcador.fijado ? `Compromisos fijados a las ${marcador.fijadoAt} · real/total` : 'Compromisos aún sin fijar hoy', marginL, y); y+=14;
     doc.setTextColor(28,43,57);
 
     METRICS.forEach(m=>{
@@ -2299,6 +2336,30 @@
       let gly = y+30;
       wrappedGap.forEach(l=>{ doc.text(l, marginL+10, gly); gly+=12; });
       y += gapBoxH+14;
+      doc.setTextColor(28,43,57);
+    }
+
+    // ---------- Cambios al compromiso ya fijado (auditoría) ----------
+    // Cada vez que alguien edita un compromiso después de "Fijar compromisos" queda
+    // aquí el motivo — para que en la junta no se pueda mover la meta sin que quede rastro.
+    if(marcador.compromisoLog && marcador.compromisoLog.length){
+      const fmtLogV = v => (v===null||v===undefined) ? '--' : '$'+Number(v).toLocaleString('es-MX');
+      const logLines = marcador.compromisoLog.map(l=>{
+        const hora = new Date(l.ts).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+        return `${hora} - ${l.label}: ${fmtLogV(l.oldVal)} -> ${fmtLogV(l.newVal)} - "${l.reason}"`;
+      });
+      doc.setFontSize(8.5);
+      const wrappedLog = logLines.flatMap(l=>doc.splitTextToSize(l, pageW-marginL-marginR-20));
+      const logBoxH = wrappedLog.length*12 + 30;
+      checkBreak(logBoxH+10);
+      doc.setFillColor(251,234,233); doc.setDrawColor(179,38,30); doc.setLineWidth(1);
+      doc.roundedRect(marginL, y, pageW-marginL-marginR, logBoxH, 6,6,'FD');
+      doc.setTextColor(179,38,30); doc.setFont(undefined,'bold'); doc.setFontSize(10);
+      doc.text(`CAMBIOS AL COMPROMISO YA FIJADO - ${marcador.compromisoLog.length}`, marginL+10, y+16);
+      doc.setFont(undefined,'normal'); doc.setFontSize(8.5);
+      let lgy = y+30;
+      wrappedLog.forEach(l=>{ doc.text(l, marginL+10, lgy); lgy+=12; });
+      y += logBoxH+14;
       doc.setTextColor(28,43,57);
     }
 
