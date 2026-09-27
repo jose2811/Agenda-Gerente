@@ -418,14 +418,6 @@
     </div>
     <p class="pdf-hint">El PDF trae el detalle completo: Marcador, meta semanal, y Crecimiento de cartera con activos, resueltos y todos los comentarios — para planear la junta de la mañana o revisar el avance del día.</p>
 
-    <label class="pdf-hint" style="display:block;margin-top:8px;">Corte del día:
-      <select id="corteSelect" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;">
-        <option value="inicio">Inicio del día</option>
-        <option value="12pm">Corte 12pm</option>
-        <option value="3pm">Corte 3pm</option>
-        <option value="fin">Fin del día</option>
-      </select>
-    </label>
     <button class="btn btn-gp" id="btnExportJson" style="width:100%;margin-top:8px;">📲 Enviar datos a GP</button>
     <p class="pdf-hint" id="exportHint">Se manda solo a la consola de tu GP. Si no hay internet en ese momento, se descarga el archivo para que lo mandes por WhatsApp como antes.</p>
 
@@ -461,7 +453,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.42.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.43.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -1334,6 +1326,9 @@
   // WhatsApp a mano) para no dejar al gerente sin forma de reportar.
   const BUZON_URL = 'https://script.google.com/macros/s/AKfycbz5kIbt7QscQCWVeXi326POMZJt4UIRnDghlwzRCqrXBQP21WInKiH88qQSpyEB0kHVxA/exec';
   const BUZON_TOKEN = '1408';
+  // Se calcula siempre AL MOMENTO de enviar (no al abrir la app) — así, si el
+  // gerente deja la agenda abierta desde la mañana y manda el corte de las 12,
+  // no se queda marcado por error como "Inicio del día".
   function detectCorte(){
     const h = new Date().getHours();
     if(h < 10) return 'inicio';
@@ -1341,8 +1336,6 @@
     if(h < 18) return '3pm';
     return 'fin';
   }
-  const corteSelect = $('#corteSelect');
-  if(corteSelect) corteSelect.value = detectCorte();
   async function enviarABuzon(data, corte){
     if(!BUZON_URL) return {ok:false, error:'buzón no configurado'};
     const body = {
@@ -1386,7 +1379,7 @@
   // es más confiable que hacerlos pasar por un paso que probablemente falle.
   $('#btnExportJson').addEventListener('click', async ()=>{
     const data = buildExportData();
-    const corte = (corteSelect && corteSelect.value) || detectCorte();
+    const corte = detectCorte();
 
     // 1) Intento silencioso: mandar directo al buzón de la Consola GP.
     try{
