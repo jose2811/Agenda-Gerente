@@ -453,7 +453,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.43.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.43.1 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -733,7 +733,6 @@
   }
 
   // ---------- Último envío a GP — visible arriba, para que no se pierda de vista ----------
-  const CORTE_LABELS = {inicio:'Inicio del día', '12pm':'Corte 12pm', '3pm':'Corte 3pm', fin:'Fin del día'};
   function saveLastSendGP(corte){
     lsSet('gerente:lastSendGP', JSON.stringify({ts: new Date().toISOString(), corte}));
     renderLastSendLine();
@@ -753,8 +752,7 @@
       const isToday = toDateStr(dt) === todayStr();
       const fecha = dt.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit'});
       const hora = dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-      const corteLabel = CORTE_LABELS[d.corte] || d.corte || '';
-      el.innerHTML = `📲 Último envío a GP: <b>${fecha}, ${hora}</b>${corteLabel?` (${corteLabel})`:''}`;
+      el.innerHTML = `📲 Último envío a GP: <b>${fecha}, ${hora}</b>`;
       el.classList.toggle('ok', isToday);
       el.classList.toggle('stale', !isToday);
       if(!isToday) el.innerHTML += ' — ¡ojo, es de otro día!';
