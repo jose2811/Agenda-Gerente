@@ -62,9 +62,10 @@
   .last-send-line.ok b{color:var(--m4);}
   .last-send-line.stale{color:var(--danger);}
   .last-send-line.stale b{color:var(--danger);}
-  .cfg-edit-row{display:flex;gap:6px;flex:1;min-width:180px;}
+  .cfg-edit-row{display:flex;gap:6px;flex:1;min-width:180px;flex-wrap:wrap;}
   .cfg-edit-row.hidden{display:none;}
-  .cfg-edit-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .cfg-edit-row input,.cfg-edit-row select{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .cfg-edit-row input#sucursalOtra{flex-basis:100%;}
   .cfg-date{border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:12px;font-family:inherit;color:var(--ink);background:#fff;flex-shrink:0;width:132px;}
 
   /* ---------- Marcador: tarjetas de métrica ---------- */
@@ -361,7 +362,17 @@
       <button class="cfg-edit-btn" id="cfgEditBtn">editar</button>
     </div>
     <div class="cfg-edit-row" id="cfgEditRow">
-      <input type="text" id="sucursal" placeholder="Sucursal">
+      <select id="sucursalSelect">
+        <option value="">Selecciona tu sucursal</option>
+        <option value="Oblatos">Oblatos</option>
+        <option value="Tlajomulco">Tlajomulco</option>
+        <option value="Tlaquepaque">Tlaquepaque</option>
+        <option value="Tonalá">Tonalá</option>
+        <option value="Zapopan">Zapopan</option>
+        <option value="__otra__">Otra (especificar)</option>
+      </select>
+      <input type="text" id="sucursalOtra" placeholder="Nombre de tu sucursal" style="display:none;">
+      <input type="hidden" id="sucursal">
       <input type="text" id="gerente" placeholder="Gerente">
     </div>
   </div>
@@ -458,7 +469,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.45.1 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.46.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -730,6 +741,20 @@
     sTxt.classList.toggle('empty', !sucursalInput.value);
     gTxt.textContent = gerenteInput.value || 'Sin gerente';
     gTxt.classList.toggle('empty', !gerenteInput.value);
+    // OJO: no llamar syncSucursalSelectFromValue() aquí adentro — cuando el usuario
+    // elige "Otra" en el select, el valor real todavía está vacío por un instante
+    // (antes de escribir el texto libre), y si esta función se llama en ese momento
+    // se resetearía el select solo. Por eso el sync se hace explícito solo en los
+    // puntos donde se carga una sucursal ya guardada (init, importar, etc.).
+  }
+  const SUCURSALES_FIJAS = ['Oblatos','Tlajomulco','Tlaquepaque','Tonalá','Zapopan'];
+  function syncSucursalSelectFromValue(){
+    const v = sucursalInput.value || '';
+    const sel = $('#sucursalSelect'), otra = $('#sucursalOtra');
+    if(!sel) return;
+    if(!v){ sel.value=''; otra.style.display='none'; otra.value=''; }
+    else if(SUCURSALES_FIJAS.includes(v)){ sel.value=v; otra.style.display='none'; otra.value=''; }
+    else { sel.value='__otra__'; otra.style.display=''; otra.value=v; }
   }
   function setCfgEditing(open){
     $('#cfgEditRow').classList.toggle('hidden', !open);
@@ -2201,11 +2226,29 @@
   // ---------- Init / cambio de fecha ----------
   gerenteInput.addEventListener('input', ()=>{ saveConfig(); refreshCfgDisplay(); });
   sucursalInput.addEventListener('input', ()=>{ saveConfig(); refreshCfgDisplay(); });
+  $('#sucursalSelect').addEventListener('change', ()=>{
+    const sel = $('#sucursalSelect'), otra = $('#sucursalOtra');
+    if(sel.value === '__otra__'){
+      otra.style.display = '';
+      otra.value = '';
+      sucursalInput.value = '';
+      setTimeout(()=>otra.focus(), 30);
+    } else {
+      otra.style.display = 'none';
+      otra.value = '';
+      sucursalInput.value = sel.value;
+    }
+    saveConfig(); refreshCfgDisplay();
+  });
+  $('#sucursalOtra').addEventListener('input', ()=>{
+    sucursalInput.value = $('#sucursalOtra').value;
+    saveConfig(); refreshCfgDisplay();
+  });
   let cfgEditing = false;
   $('#cfgEditBtn').addEventListener('click', ()=>{
     cfgEditing = !cfgEditing;
     setCfgEditing(cfgEditing);
-    if(cfgEditing) sucursalInput.focus();
+    if(cfgEditing) $('#sucursalSelect').focus();
   });
   fechaInput.addEventListener('change', ()=>{
     flushSaveMarcador();
@@ -2586,6 +2629,7 @@
     const cfg = loadConfig();
     if(cfg){ gerenteInput.value = cfg.gerente||''; sucursalInput.value = cfg.sucursal||''; }
     refreshCfgDisplay();
+    syncSucursalSelectFromValue();
     renderLastSendLine();
     // Primera vez (sin nada capturado todavía): arranca abierto para que puedan llenarlo.
     cfgEditing = !(sucursalInput.value || gerenteInput.value);
