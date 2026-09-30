@@ -469,7 +469,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.46.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.47.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -647,6 +647,7 @@
   // No llevan Compromiso (no se fijan en la junta de la mañana): son créditos+monto
   // que se actualizan libremente en cada corte (12:00 pm y 3:00 pm), igual que Real.
   const OTROS_INDICADORES = [
+    {key:'por_firmar', color:'c4', icon:'✍️', label:'Por firmar',  hint:'Créditos ya autorizados — solo falta ir con el cliente a firmar para poder dispersar.'},
     {key:'en_mesa',    color:'c2', icon:'🏦', label:'En mesa',     hint:'Créditos actualmente en mesa de análisis, esperando aprobación o rechazo.'},
     {key:'por_enviar', color:'c5', icon:'📤', label:'Por enviar',  hint:'Créditos listos para enviarse a mesa de análisis.'},
     {key:'rechazado',  color:'c6', icon:'⛔', label:'Rechazado',   hint:'Créditos ya enviados a mesa y rechazados por mesa.'},
