@@ -68,6 +68,11 @@
   .cfg-edit-row input#sucursalOtra{flex-basis:100%;}
   .cfg-date{border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:12px;font-family:inherit;color:var(--ink);background:#fff;flex-shrink:0;width:132px;}
 
+  .team-dates-banner{background:var(--warn-soft);border:1px solid #F0DCA0;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12.5px;color:var(--ink);line-height:1.5;}
+  .team-dates-banner b{color:var(--warn);}
+  .tdb-row{display:block;}
+  .tdb-row + .tdb-row{margin-top:2px;}
+
   /* ---------- Marcador: tarjetas de métrica ---------- */
   .lockbar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;}
   .lockbar .txt{flex:1;font-size:12.5px;color:var(--muted);line-height:1.4;}
@@ -275,6 +280,8 @@
   .team-item-count{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
   .team-item-alta{font-size:11px;color:var(--muted);border:none;background:none;font-family:inherit;cursor:pointer;text-decoration:underline dotted;padding:0;}
   .team-item-alta.unset{color:var(--danger);font-weight:600;text-decoration:none;}
+  .team-item-cumple{font-size:11px;color:var(--muted);border:none;background:none;font-family:inherit;cursor:pointer;text-decoration:underline dotted;padding:0;}
+  .team-item-cumple.unset{text-decoration:none;opacity:.6;}
   .team-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;}
   .team-badge.training{background:var(--warn-soft, #FFF3D6);color:var(--warn, #8A5D00);}
   .team-badge.elegible{background:var(--ok-soft, #E7F1EE);color:var(--ok, #1F6F5C);}
@@ -393,6 +400,8 @@
   </div>
   <div class="last-send-line" id="lastSendLine"></div>
 
+  <div class="team-dates-banner" id="teamDatesBanner" style="display:none;"></div>
+
   <!-- ================= VISTA: MARCADOR DIARIO ================= -->
   <div class="view active" id="view-marcador">
 
@@ -488,7 +497,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.48.1 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.49.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -1591,7 +1600,7 @@
       const list = JSON.parse(raw);
       // Compatibilidad: asesores capturados antes de que existiera fecha de alta/baja
       // nacen activos y sin fecha (no cuentan para las metas hasta que se las pongas).
-      return list.map(a=>({ ...a, activo: a.activo!==false, fechaAlta: a.fechaAlta || null }));
+      return list.map(a=>({ ...a, activo: a.activo!==false, fechaAlta: a.fechaAlta || null, fechaNacimiento: a.fechaNacimiento || null }));
     }catch(e){ console.error(e); } }
     return [];
   }
@@ -1622,7 +1631,56 @@
     return asesores.filter(a=>esElegible(a, refDateStr)).length;
   }
 
+  // ---------- Recordatorio de cumpleaños y aniversarios ----------
+  // Para no tener que acordarse de nada: si algún asesor activo cumple años o
+  // aniversario de ingreso hoy o en los próximos días, aparece arriba de la agenda
+  // (visible aunque estés en Resumen general, no solo en Mi Equipo).
+  const RECORDATORIO_DIAS_ANTES = 7;
+  function proximaOcurrencia(dateStr, hoyStr){
+    // Da la próxima vez que se repite el día/mes de dateStr a partir de hoyStr —
+    // ignora el año de dateStr salvo para calcular cuántos años se cumplen.
+    if(!dateStr) return null;
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const hoy = new Date(hoyStr+'T00:00:00');
+    const hoySinHora = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    let next = new Date(hoy.getFullYear(), m-1, d);
+    if(next < hoySinHora) next = new Date(hoy.getFullYear()+1, m-1, d);
+    const diasFaltan = Math.round((next - hoySinHora) / 86400000);
+    const anios = next.getFullYear() - y;
+    return { diasFaltan, anios };
+  }
+  function proximosEventosEquipo(hoyStr){
+    const eventos = [];
+    asesores.filter(a=>a.activo).forEach(a=>{
+      if(a.fechaNacimiento){
+        const oc = proximaOcurrencia(a.fechaNacimiento, hoyStr);
+        if(oc && oc.diasFaltan<=RECORDATORIO_DIAS_ANTES) eventos.push({tipo:'cumple', nombre:a.name, ...oc});
+      }
+      if(a.fechaAlta){
+        const oc = proximaOcurrencia(a.fechaAlta, hoyStr);
+        // El aniversario cuenta a partir del primer año — el día exacto de alta no es "aniversario" todavía.
+        if(oc && oc.anios>=1 && oc.diasFaltan<=RECORDATORIO_DIAS_ANTES) eventos.push({tipo:'aniversario', nombre:a.name, ...oc});
+      }
+    });
+    eventos.sort((x,y)=> x.diasFaltan - y.diasFaltan);
+    return eventos;
+  }
+  function renderTeamDatesBanner(){
+    const banner = $('#teamDatesBanner');
+    const eventos = proximosEventosEquipo(todayStr());
+    if(!eventos.length){ banner.style.display = 'none'; return; }
+    banner.style.display = '';
+    banner.innerHTML = eventos.map(e=>{
+      const cuando = e.diasFaltan===0 ? 'hoy' : (e.diasFaltan===1 ? 'mañana' : `en ${e.diasFaltan} días`);
+      if(e.tipo==='cumple'){
+        return `<span class="tdb-row">🎂 <b>${escapeHTML(e.nombre)}</b> cumple años ${cuando}.</span>`;
+      }
+      return `<span class="tdb-row">🎉 <b>${escapeHTML(e.nombre)}</b> cumple ${e.anios} año(s) en la empresa ${cuando}.</span>`;
+    }).join('');
+  }
+
   function renderTeam(){
+    renderTeamDatesBanner();
     const wrap = $('#teamListWrap');
     const hcBox = $('#teamHeadcountBox');
     const hoy = fechaInput.value;
@@ -1652,12 +1710,14 @@
         badgeHTML = `<span class="team-badge elegible">✓ ${dias}d de antigüedad</span>`;
       }
       const altaLabel = a.fechaAlta ? fmtDate(a.fechaAlta) : 'poner fecha';
+      const cumpleLabel = a.fechaNacimiento ? fmtDate(a.fechaNacimiento) : 'poner cumpleaños';
       return `
       <div class="team-item${a.activo?'':' inactive'}" data-id="${a.id}">
         <div class="team-item-main">
           <div class="team-item-name">${escapeHTML(a.name)}${a.activo?'':' (de baja)'}</div>
           <div class="team-item-meta">
             <button type="button" class="team-item-alta${a.fechaAlta?'':' unset'}" data-action="team-edit-alta" title="Cambiar fecha de alta">📅 alta: ${altaLabel}</button>
+            <button type="button" class="team-item-cumple${a.fechaNacimiento?'':' unset'}" data-action="team-edit-cumple" title="Cambiar fecha de cumpleaños">🎂 ${cumpleLabel}</button>
             ${a.activo ? badgeHTML : ''}
             <span class="team-item-count">${count} prospecto(s)</span>
           </div>
@@ -1681,6 +1741,20 @@
         renderTeam();
         refreshWeekly();
         renderMetrics();
+      });
+    });
+    wrap.querySelectorAll('[data-action="team-edit-cumple"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.closest('.team-item').dataset.id;
+        const a = asesores.find(x=>x.id===id);
+        const current = a.fechaNacimiento || '';
+        const val = prompt(`Fecha de cumpleaños de ${a.name} (AAAA-MM-DD — el año puede ser aproximado, solo se usa el día y el mes):`, current);
+        if(val===null) return;
+        const trimmed = val.trim();
+        if(trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)){ toast('Formato de fecha no válido — usa AAAA-MM-DD'); return; }
+        a.fechaNacimiento = trimmed || null;
+        saveAsesores();
+        renderTeam();
       });
     });
     wrap.querySelectorAll('[data-action="team-toggle-activo"]').forEach(btn=>{
@@ -1721,7 +1795,7 @@
     const fechaInp = $('#teamFechaAltaInput');
     const name = inp.value.trim();
     if(!name){ inp.focus(); return; }
-    asesores.push({id: genAsesorId(), name, fechaAlta: fechaInp.value || null, activo: true});
+    asesores.push({id: genAsesorId(), name, fechaAlta: fechaInp.value || null, fechaNacimiento: null, activo: true});
     saveAsesores();
     inp.value = '';
     fechaInp.value = '';
