@@ -488,7 +488,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.48.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.48.1 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -2804,6 +2804,15 @@
     refreshWeekly();
   }
   init();
+
+  // Guarda una copia local de la app para que el acceso directo pueda abrir
+  // aunque no haya datos/wifi en ese momento — siempre intenta la versión más
+  // reciente primero, y solo usa lo guardado si de verdad no hay conexión.
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
 })();
 </script>
 </body>
