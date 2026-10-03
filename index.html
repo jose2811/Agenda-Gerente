@@ -85,7 +85,7 @@
 
   /* ---------- Marcador compacto: una fila por métrica, R/C/T ---------- */
   .scoreboard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:2px 12px;margin-bottom:6px;}
-  .scorerow{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px dashed var(--line);border-left:4px solid transparent;padding-left:8px;margin-left:-8px;}
+  .scorerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:11px 0;border-bottom:1px dashed var(--line);border-left:4px solid transparent;padding-left:8px;margin-left:-8px;}
   .scorerow:last-child{border-bottom:none;}
   .scorerow.c1{border-left-color:var(--m1);} .scorerow.c2{border-left-color:var(--m2);}
   .scorerow.c3{border-left-color:var(--m3);} .scorerow.c4{border-left-color:var(--m4);}
@@ -114,6 +114,7 @@
   .sr-dollar.dollar-real{color:var(--c-real);opacity:.7;}
   .sr-dollar.dollar-compromiso{color:var(--c-compromiso);opacity:.85;}
   .sr-auto-tag{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--m4);font-weight:700;background:var(--m4-soft);padding:2px 5px;border-radius:5px;margin-left:2px;}
+  .sr-stretch{flex-basis:100%;text-align:right;font-size:9.5px;color:var(--muted);font-weight:600;padding-right:2px;}
   .sr-sep{color:var(--muted);font-weight:500;font-size:13px;padding:0 1px;}
   .sr-sign-toggle{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;width:20px;height:20px;font-size:13px;font-weight:700;line-height:1;cursor:pointer;flex-shrink:0;padding:0;}
   .sr-sign-toggle:hover{border-color:var(--ink);color:var(--ink);}
@@ -139,6 +140,7 @@
   .weekly-edit-toggle{font-size:11px;color:var(--m4);cursor:pointer;font-weight:600;background:none;border:none;font-family:inherit;padding:0;}
   .weekly-set{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
   .weekly-set input{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:14px;font-family:'IBM Plex Mono',monospace;}
+  .weekly-set-hint{font-size:11px;color:var(--muted);margin:-6px 0 10px;}
   .weekly-bignum{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}
   .weekly-bignum .n{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:22px;}
   .weekly-bignum .of{font-size:13px;color:var(--muted);}
@@ -260,15 +262,28 @@
   .cre-add-row select.cre-asesor-pick{flex:1 1 130px;}
 
   /* ---------- Mi Equipo ---------- */
-  .team-add-wrap{display:flex;gap:8px;margin-bottom:14px;}
-  .team-add-wrap input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:14px;font-family:inherit;}
+  .team-add-wrap{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .team-add-wrap input[type="text"]{flex:1 1 140px;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:14px;font-family:inherit;}
+  .team-add-wrap input[type="date"]{flex:1 1 140px;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;color:var(--ink);}
+  .team-add-hint{font-size:11.5px;color:var(--muted);margin:-8px 0 14px;}
   .team-list{display:flex;flex-direction:column;gap:8px;}
-  .team-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--m1);border-radius:10px;padding:10px 12px;}
-  .team-item-name{font-weight:600;font-size:14px;flex:1;}
+  .team-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--m1);border-radius:10px;padding:10px 12px;flex-wrap:wrap;}
+  .team-item.inactive{border-left-color:var(--muted);opacity:.6;}
+  .team-item-main{flex:1 1 auto;min-width:0;}
+  .team-item-name{font-weight:600;font-size:14px;}
+  .team-item-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;}
   .team-item-count{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
-  .team-item-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;}
+  .team-item-alta{font-size:11px;color:var(--muted);border:none;background:none;font-family:inherit;cursor:pointer;text-decoration:underline dotted;padding:0;}
+  .team-item-alta.unset{color:var(--danger);font-weight:600;text-decoration:none;}
+  .team-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;}
+  .team-badge.training{background:var(--warn-soft, #FFF3D6);color:var(--warn, #8A5D00);}
+  .team-badge.elegible{background:var(--ok-soft, #E7F1EE);color:var(--ok, #1F6F5C);}
+  .team-item-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:4px 6px;white-space:nowrap;}
   .team-item-del:hover{color:var(--danger);}
+  .team-item-baja{border:none;background:none;color:var(--m1);cursor:pointer;font-size:11px;padding:4px 6px;white-space:nowrap;font-weight:600;}
   .team-empty{font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:24px 0;}
+  .team-headcount-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--ink);}
+  .team-headcount-box b{color:var(--m4);}
   .cre-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 2px;}
 
   /* ---------- Bitácora de comentarios: colapsada por default ---------- */
@@ -424,6 +439,7 @@
         <input type="number" id="metaSemanalInput" placeholder="Meta de la semana en pesos" min="0">
         <button class="btn btn-primary" id="btnGuardarMeta">Guardar</button>
       </div>
+      <div class="weekly-set-hint" id="weeklySetHint" style="display:none;"></div>
       <div id="weeklyBody"></div>
     </div>
 
@@ -460,16 +476,19 @@
 
   <!-- ================= VISTA: MI EQUIPO (asesores) ================= -->
   <div class="view" id="view-equipo">
-    <p class="cre-hint" style="margin-bottom:12px;">Captura aquí a tus asesores una sola vez — así, al asignar un prospecto en Seguimiento a Desembolsos, se elige de una lista en vez de escribirse a mano (evita que "Juan" y "Jaun" se registren como personas distintas).</p>
+    <p class="cre-hint" style="margin-bottom:12px;">Captura aquí a tus asesores una sola vez — así, al asignar un prospecto en Seguimiento a Desembolsos, se elige de una lista en vez de escribirse a mano (evita que "Juan" y "Jaun" se registren como personas distintas). La fecha de alta también se usa para calcular solas las metas de Desembolso y Approvals — cuentan los asesores con 15 días o más.</p>
     <div class="team-add-wrap">
       <input type="text" id="teamNameInput" placeholder="Nombre del asesor">
+      <input type="date" id="teamFechaAltaInput" title="Fecha de alta">
       <button class="btn btn-primary" id="teamAddBtn">+ Agregar asesor</button>
     </div>
+    <div class="team-add-hint">La fecha de alta es opcional. Si no la pones, se asume que ya tiene antigüedad suficiente y SÍ cuenta para las metas. Solo ponla si todavía está en capacitación (menos de 15 días) para que no cuente todavía.</div>
+    <div class="team-headcount-box" id="teamHeadcountBox"></div>
     <div id="teamListWrap"></div>
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.47.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.48.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -634,11 +653,17 @@
   });
 
   // ---------- Definición de métricas ----------
+  // El Total de Approvals del día tampoco se teclea: dirección pide 2 por cada asesor
+  // elegible (15+ días, congelado el lunes — ver headcountSemana) y ese es el número
+  // contra el que se calcula el %. La meta propia (3 por asesor) es más exigente a
+  // propósito, nada más para que la oficina no se quede en el mínimo — no afecta el %.
+  const APPROVALS_MULT_DIRECCION = 2;
+  const APPROVALS_MULT_PROPIA = 3;
   const METRICS = [
     {key:'fichas',      color:'c1', icon:'📋', label:'Fichas del día',        hint:'Cuentas que vencen hoy. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'mora17',      color:'c2', icon:'⏳', label:'Mora 1–7 días',         hint:'Cartera en atraso temprano. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'desembolso',  color:'c4', icon:'💰', label:'Desembolso', shortLabel:'Desemb.', hint:'Real = suma de lo Desembolsado hoy. Compromiso = suma de lo marcado "Por desembolsar" en Crecimiento. Ambos automáticos.', hasTotal:false, unit:'money', auto:true},
-    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
+    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila). Total = 2× asesores elegibles (pedido por dirección), se calcula solo.', hasTotal:true,  unit:'count', noCompromiso:true, autoTotal:true, stretchMult:APPROVALS_MULT_PROPIA},
     {key:'mora8mas',    color:'c6', icon:'📉', label:'Mora 8+ días ($)',      hint:'Pesos comprometidos a bajar de la cartera vencida mayor a 8 días — no folios, dinero.', hasTotal:false, unit:'money', signedColor:true},
   ];
   const METRIC_BY_KEY = Object.fromEntries(METRICS.map(m=>[m.key,m]));
@@ -840,6 +865,12 @@
       .filter(e => e.porDesembolsar && (!isCrecDone(e) || e.statusDate===dateStr))
       .reduce((sum,e)=>sum+(e.monto||0),0);
   }
+  function syncAutoMetrics(){
+    marcador.metrics.desembolso.real = calcDesembolsoReal(fechaInput.value);
+    marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
+    const hc = headcountSemana(mondayOf(fechaInput.value));
+    marcador.metrics.prospeccion.total = hc * APPROVALS_MULT_DIRECCION;
+  }
   // Las cuentas que forman el Compromiso de hoy pero NO llegaron a Desembolsado:
   // siguen abiertas (se quedaron en mesa) o se rechazaron hoy mismo. Esta es
   // justo la lista que explica la brecha entre Compromiso y Real — para no
@@ -886,8 +917,7 @@
   }
 
   function renderMetrics(){
-    marcador.metrics.desembolso.real = calcDesembolsoReal(fechaInput.value);
-    marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
+    syncAutoMetrics();
     const wrap = $('#metricsWrap');
     const locked = marcador.fijado;
     wrap.innerHTML = METRICS.map(m=>{
@@ -913,7 +943,8 @@
       const compromisoVal = m.auto ? fmtMoneyEdit(d.compromiso||0) : (isMoney ? fmtMoneyEdit(d.compromiso) : (d.compromiso??''));
       const compromisoDisabled = m.auto ? true : locked;
       const totalVal = isMoney ? fmtMoneyEdit(d.total) : (d.total??'');
-      const totalDisabled = m.noCompromiso ? false : locked;
+      const totalDisabled = m.autoTotal ? true : (m.noCompromiso ? false : locked);
+      const stretchVal = m.stretchMult ? (headcountSemana(mondayOf(fechaInput.value)) * m.stretchMult) : null;
       // Solo en Mora 8+: el color del número refleja su signo (negativo=bajó=bien,
       // positivo=subió=mal), no la comparación contra el compromiso como las demás filas.
       const signedRealCls = m.signedColor ? (Number(d.real)<0 ? ' sr-real-good' : (Number(d.real)>0 ? ' sr-real-bad' : '')) : '';
@@ -926,7 +957,7 @@
         ${(compromisoDisabled && !m.auto) ? `<button type="button" class="sr-sign-toggle" data-action="edit-locked-compromiso" data-key="${m.key}" title="El compromiso ya quedó fijado — para cambiarlo hay que anotar el motivo">✏️</button>` : ''}`}
         ${m.hasTotal ? `<span class="sr-sep">/</span>
         ${dollarTotal}<input type="${inType}" ${minAttr} inputmode="${inMode}" class="sr-input sr-total${moneyCls}" data-field="total" data-key="${m.key}" value="${totalVal}" ${totalDisabled?'disabled':''} placeholder="0">` : ''}
-        ${m.auto ? `<span class="sr-auto-tag" title="Se calcula solo desde Crecimiento">auto</span>` : ''}
+        ${(m.auto || m.autoTotal) ? `<span class="sr-auto-tag" title="${m.autoTotal ? 'Se calcula solo: '+APPROVALS_MULT_DIRECCION+'× asesores elegibles' : 'Se calcula solo desde Crecimiento'}">auto</span>` : ''}
       `;
       return `
       <div class="scorerow ${m.color} ${gclass}" data-row="${m.key}" title="${escapeHTML(m.hint)}">
@@ -934,6 +965,7 @@
         <span class="sr-label">${m.shortLabel || m.label}</span>
         <span class="sr-nums">${numsHTML}</span>
         <span class="sr-pctchip">${pct===null? ((locked||m.auto||m.noCompromiso)?'—':'') : pct+'%'}</span>
+        ${stretchVal!==null ? `<span class="sr-stretch" title="Meta propia (no cuenta para el %, solo para no quedarnos en el mínimo): ${m.stretchMult}× asesores elegibles">meta propia: ${stretchVal}</span>` : ''}
       </div>`;
     }).join('');
 
@@ -1153,12 +1185,33 @@
     pendingCrecConfirm = null; pendingCrecCancel = null; pendingCrecReasonMode = false;
   });
 
+  // ---------- Headcount de la semana (congelado el lunes) ----------
+  // Cuántos asesores con 15+ días de antigüedad había el lunes de esta semana — se
+  // calcula una sola vez (con la fecha del lunes como referencia, no "hoy", para que
+  // de igual si se consulta por primera vez en lunes o en jueves) y de ahí en
+  // adelante se queda fijo toda la semana, aunque el equipo cambie a media semana.
+  // Así nadie ve que la meta "brinca" un miércoles porque alguien cumplió años en la empresa.
+  // El "candado de lunes" NO es un caché guardado — es que la antigüedad siempre se mide
+  // contra el lunes de la semana, nunca contra "hoy". Así, un asesor que cumple sus 15 días
+  // a media semana sigue sin contar (antigüedad < 15 vs. el lunes) hasta el lunes siguiente,
+  // pero si agregas o corriges un asesor en Mi Equipo, el cambio se refleja al momento —
+  // nunca se queda pegado en un número viejo.
+  function headcountSemana(mondayStr){
+    const n = countAsesoresElegibles(mondayStr);
+    return n;
+  }
+
   // ---------- Meta semanal de desembolso ----------
+  const META_POR_ASESOR = 70000; // piso semanal por asesor elegible (15+ días)
   function metaKey(mondayStr){ return 'gerente:metaSemanal:'+mondayStr; }
+  function metaPisoSemana(mondayStr){ return headcountSemana(mondayStr) * META_POR_ASESOR; }
   function loadMeta(mondayStr){
+    const piso = metaPisoSemana(mondayStr);
     const raw = lsGet(metaKey(mondayStr));
-    if(raw){ try{ return JSON.parse(raw).meta || 0; }catch(e){} }
-    return 0;
+    let manual = 0;
+    if(raw){ try{ manual = JSON.parse(raw).meta || 0; }catch(e){} }
+    // La meta nunca baja del piso automático — "editar meta" solo sirve para subirla.
+    return Math.max(piso, manual);
   }
   function saveMeta(mondayStr, meta){
     lsSet(metaKey(mondayStr), JSON.stringify({meta}));
@@ -1167,17 +1220,30 @@
 
   $('#weeklyEditToggle').addEventListener('click', ()=>{
     const wrap = $('#weeklySetWrap');
+    const hint = $('#weeklySetHint');
     const isHidden = wrap.style.display==='none';
     wrap.style.display = isHidden? 'flex':'none';
+    hint.style.display = isHidden? '':'none';
     if(isHidden){
-      $('#metaSemanalInput').value = loadMeta(mondayOf(fechaInput.value)) || '';
+      const mon = mondayOf(fechaInput.value);
+      const piso = metaPisoSemana(mon);
+      $('#metaSemanalInput').value = loadMeta(mon) || '';
+      $('#metaSemanalInput').min = piso;
+      hint.textContent = `Mínimo automático: ${fmtMoney(piso)} (${headcountSemana(mon)} asesor(es) elegibles × ${fmtMoney(META_POR_ASESOR)}). Solo puedes poner un número igual o mayor.`;
       $('#metaSemanalInput').focus();
     }
   });
   $('#btnGuardarMeta').addEventListener('click', ()=>{
+    const mon = mondayOf(fechaInput.value);
+    const piso = metaPisoSemana(mon);
     const val = Number($('#metaSemanalInput').value)||0;
-    saveMeta(mondayOf(fechaInput.value), val);
+    if(val > 0 && val < piso){
+      toast(`La meta no puede ser menor al mínimo automático (${fmtMoney(piso)})`);
+      return;
+    }
+    saveMeta(mon, val);
     $('#weeklySetWrap').style.display='none';
+    $('#weeklySetHint').style.display='none';
     refreshWeekly();
     toast('Meta semanal guardada');
   });
@@ -1203,22 +1269,26 @@
       <div class="wd-chip ${x.amt?'has':''}"><span class="wd-day">${x.label}</span><span class="wd-amt">${x.amt? '$'+x.amt.toLocaleString('es-MX') : '—'}</span></div>
     `).join('')}</div>`;
     if(!meta){
-      body.innerHTML = `<div class="weekly-empty">Sin meta capturada esta semana — usa "editar meta".</div>${dailyHTML}`;
+      body.innerHTML = `<div class="weekly-empty">Todavía no tienes asesores con 15+ días de antigüedad capturados — agrégalos en "Mi Equipo" para que la meta se calcule sola, o usa "editar meta" para ponerla a mano.</div>${dailyHTML}`;
       return;
     }
+    const piso = metaPisoSemana(mon);
+    const metaOrigenNote = meta > piso
+      ? `meta propia, por arriba del mínimo automático de ${fmtMoney(piso)}`
+      : `mínimo automático · ${headcountSemana(mon)} asesor(es) elegibles × ${fmtMoney(META_POR_ASESOR)}`;
     const pct = Math.min(100, Math.round((realAcum/meta)*100));
     body.innerHTML = `
       <div class="weekly-bignum"><span class="n">${fmtMoney(realAcum)}</span><span class="of">de ${fmtMoney(meta)}</span></div>
       <div class="weekly-bar"><div class="weekly-bar-fill" style="width:${pct}%"></div></div>
       <div class="weekly-note">${pct}% de la meta semanal · lunes a ${fmtDateDow(fechaInput.value)}</div>
+      <div class="weekly-note" style="margin-top:-4px;">${metaOrigenNote}</div>
       ${dailyHTML}
     `;
   }
 
   // ---------- Resumen para WhatsApp ----------
   function buildTextSummary(){
-    marcador.metrics.desembolso.real = calcDesembolsoReal(fechaInput.value);
-    marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
+    syncAutoMetrics();
     // Dejo la sucursal en la primera línea aparte del nombre — si a dirección le llegan
     // estos mensajes de varios gerentes, es lo que le permite distinguir uno de otro sin abrir nada.
     // WhatsApp: negritas *así*, cursivas _así_ — combinadas es _*así*_.
@@ -1343,6 +1413,9 @@
         if(dia && dia.metrics && dia.metrics.desembolso){
           dia.metrics.desembolso.real = calcDesembolsoReal(date);
           dia.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(date);
+        }
+        if(dia && dia.metrics && dia.metrics.prospeccion){
+          dia.metrics.prospeccion.total = headcountSemana(mondayOf(date)) * APPROVALS_MULT_DIRECCION;
         }
       });
     }catch(e){ console.error(e); }
@@ -1514,7 +1587,12 @@
   function genAsesorId(){ asesorIdSeq++; return 'a'+Date.now().toString(36)+asesorIdSeq; }
   function loadAsesores(){
     const raw = lsGet(ASESORES_KEY);
-    if(raw){ try{ return JSON.parse(raw); }catch(e){ console.error(e); } }
+    if(raw){ try{
+      const list = JSON.parse(raw);
+      // Compatibilidad: asesores capturados antes de que existiera fecha de alta/baja
+      // nacen activos y sin fecha (no cuentan para las metas hasta que se las pongas).
+      return list.map(a=>({ ...a, activo: a.activo!==false, fechaAlta: a.fechaAlta || null }));
+    }catch(e){ console.error(e); } }
     return [];
   }
   function saveAsesores(){ lsSet(ASESORES_KEY, JSON.stringify(asesores)); touchLastModified(); }
@@ -1523,23 +1601,99 @@
     const a = asesores.find(x=>x.id===id);
     return a ? a.name : null;
   }
+  // Antigüedad en días completos entre fechaAlta y una fecha de referencia (normalmente
+  // hoy, o el lunes de la semana cuando se calcula la meta — ver headcountSemana()).
+  function antiguedadDias(fechaAlta, refDateStr){
+    if(!fechaAlta) return null;
+    const a = new Date(fechaAlta+'T00:00:00'), b = new Date(refDateStr+'T00:00:00');
+    return Math.floor((b-a) / 86400000);
+  }
+  const ANTIGUEDAD_MIN_DIAS = 15; // "más de 14 días" = 15 días o más — ya terminó capacitación
+  // Por default SÍ cuenta: la mayoría del equipo ya tiene antigüedad de sobra y no vale la
+  // pena obligar a capturar la fecha exacta de cada quien. Solo se excluye cuando SÍ se puso
+  // una fecha de alta y esa fecha dice que todavía está en capacitación (menos de 15 días).
+  function esElegible(a, refDateStr){
+    if(!a.activo) return false;
+    if(!a.fechaAlta) return true;
+    const d = antiguedadDias(a.fechaAlta, refDateStr);
+    return d===null || d>=ANTIGUEDAD_MIN_DIAS;
+  }
+  function countAsesoresElegibles(refDateStr){
+    return asesores.filter(a=>esElegible(a, refDateStr)).length;
+  }
 
   function renderTeam(){
     const wrap = $('#teamListWrap');
+    const hcBox = $('#teamHeadcountBox');
+    const hoy = fechaInput.value;
+    const elegiblesHoy = countAsesoresElegibles(hoy);
+    const sinFecha = asesores.filter(a=>a.activo && !a.fechaAlta).length;
+    hcBox.innerHTML = `Asesores que ya cuentan para las metas automáticas hoy: <b>${elegiblesHoy}</b> (activos, y con 15+ días de antigüedad si le pusiste fecha de alta).`
+      + (sinFecha ? ` <span style="color:var(--muted);">${sinFecha} asesor(es) sin fecha de alta capturada — se cuentan igual; ponle fecha solo si de verdad sigue en capacitación.</span>` : '');
     if(!asesores.length){
       wrap.innerHTML = `<div class="team-empty">Todavía no capturas a nadie de tu equipo. Agrega el primer nombre arriba.</div>`;
       return;
     }
-    wrap.innerHTML = `<div class="team-list">${asesores.map(a=>{
+    // Activos primero (los recién dados de baja no estorban arriba), y entre ellos
+    // los más nuevos primero — son los que hay que estar checando si ya cumplieron.
+    const ordered = [...asesores].sort((x,y)=>{
+      if(x.activo!==y.activo) return x.activo ? -1 : 1;
+      return (y.fechaAlta||'').localeCompare(x.fechaAlta||'');
+    });
+    wrap.innerHTML = `<div class="team-list">${ordered.map(a=>{
       const count = crecList.filter(e=>e.asesorId===a.id).length;
+      const dias = antiguedadDias(a.fechaAlta, hoy);
+      let badgeHTML = '';
+      if(!a.fechaAlta){
+        badgeHTML = `<span class="team-badge elegible">✓ cuenta (sin fecha capturada)</span>`;
+      } else if(dias < ANTIGUEDAD_MIN_DIAS){
+        badgeHTML = `<span class="team-badge training">🎓 en capacitación (${dias}d)</span>`;
+      } else {
+        badgeHTML = `<span class="team-badge elegible">✓ ${dias}d de antigüedad</span>`;
+      }
+      const altaLabel = a.fechaAlta ? fmtDate(a.fechaAlta) : 'poner fecha';
       return `
-      <div class="team-item" data-id="${a.id}">
-        <span class="team-item-name">${escapeHTML(a.name)}</span>
-        <span class="team-item-count">${count} prospecto(s)</span>
-        <button class="team-item-del" data-action="team-del" title="Eliminar de la lista">✕</button>
+      <div class="team-item${a.activo?'':' inactive'}" data-id="${a.id}">
+        <div class="team-item-main">
+          <div class="team-item-name">${escapeHTML(a.name)}${a.activo?'':' (de baja)'}</div>
+          <div class="team-item-meta">
+            <button type="button" class="team-item-alta${a.fechaAlta?'':' unset'}" data-action="team-edit-alta" title="Cambiar fecha de alta">📅 alta: ${altaLabel}</button>
+            ${a.activo ? badgeHTML : ''}
+            <span class="team-item-count">${count} prospecto(s)</span>
+          </div>
+        </div>
+        <button class="team-item-baja" data-action="team-toggle-activo">${a.activo?'Dar de baja':'Reactivar'}</button>
+        <button class="team-item-del" data-action="team-del" title="Eliminar de la lista por completo">✕</button>
       </div>`;
     }).join('')}</div>`;
 
+    wrap.querySelectorAll('[data-action="team-edit-alta"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.closest('.team-item').dataset.id;
+        const a = asesores.find(x=>x.id===id);
+        const current = a.fechaAlta || '';
+        const val = prompt(`Fecha de alta de ${a.name} (AAAA-MM-DD):`, current);
+        if(val===null) return;
+        const trimmed = val.trim();
+        if(trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)){ toast('Formato de fecha no válido — usa AAAA-MM-DD'); return; }
+        a.fechaAlta = trimmed || null;
+        saveAsesores();
+        renderTeam();
+        refreshWeekly();
+        renderMetrics();
+      });
+    });
+    wrap.querySelectorAll('[data-action="team-toggle-activo"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.closest('.team-item').dataset.id;
+        const a = asesores.find(x=>x.id===id);
+        a.activo = !a.activo;
+        saveAsesores();
+        renderTeam();
+        refreshWeekly();
+        renderMetrics();
+      });
+    });
     wrap.querySelectorAll('[data-action="team-del"]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const id = btn.closest('.team-item').dataset.id;
@@ -1556,21 +1710,27 @@
           renderTeam();
           renderCrecAsesorFilter();
           renderCrecSections();
+          refreshWeekly();
+          renderMetrics();
         });
       });
     });
   }
   $('#teamAddBtn').addEventListener('click', ()=>{
     const inp = $('#teamNameInput');
+    const fechaInp = $('#teamFechaAltaInput');
     const name = inp.value.trim();
     if(!name){ inp.focus(); return; }
-    asesores.push({id: genAsesorId(), name});
+    asesores.push({id: genAsesorId(), name, fechaAlta: fechaInp.value || null, activo: true});
     saveAsesores();
     inp.value = '';
+    fechaInp.value = '';
     inp.focus();
     renderTeam();
     renderCrecAsesorFilter();
     renderCrecSections(); // refresca los <select> de asesor ya pintados: tarjetas existentes + el formulario de captura
+    refreshWeekly();
+    renderMetrics();
   });
   $('#teamNameInput').addEventListener('keydown', ev=>{
     if(ev.key==='Enter'){ ev.preventDefault(); $('#teamAddBtn').click(); }
@@ -2279,8 +2439,7 @@
   const PDF_GAP_SOFT  = { 'gap-ok':[229,242,233], 'gap-warn':[255,246,229], 'gap-low':[251,234,233], 'gap-empty':[238,238,238] };
 
   function downloadReportPDF(){
-    marcador.metrics.desembolso.real = calcDesembolsoReal(fechaInput.value);
-    marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
+    syncAutoMetrics();
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'pt', format:'letter'});
     const marginL=40, marginR=40, pageW=doc.internal.pageSize.getWidth(), pageH=doc.internal.pageSize.getHeight();
