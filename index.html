@@ -119,7 +119,12 @@
   .sr-dollar.dollar-real{color:var(--c-real);opacity:.7;}
   .sr-dollar.dollar-compromiso{color:var(--c-compromiso);opacity:.85;}
   .sr-auto-tag{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--m4);font-weight:700;background:var(--m4-soft);padding:2px 5px;border-radius:5px;margin-left:2px;}
-  .sr-stretch{flex-basis:100%;text-align:right;font-size:9.5px;color:var(--muted);font-weight:600;padding-right:2px;}
+  .sr-stretch{flex-basis:100%;text-align:right;font-size:10.5px;color:var(--muted);font-weight:600;padding-right:2px;}
+  .sr-stretch b{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:1px 6px;border-radius:99px;margin-left:3px;}
+  .sr-stretch.gap-ok b{background:var(--ok-soft);color:var(--ok);}
+  .sr-stretch.gap-warn b{background:var(--warn-soft);color:var(--warn);}
+  .sr-stretch.gap-low b{background:var(--danger-soft);color:var(--danger);}
+  .sr-stretch.gap-empty b{background:var(--neutral-soft);color:var(--muted);}
   .sr-sep{color:var(--muted);font-weight:500;font-size:13px;padding:0 1px;}
   .sr-sign-toggle{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;width:20px;height:20px;font-size:13px;font-weight:700;line-height:1;cursor:pointer;flex-shrink:0;padding:0;}
   .sr-sign-toggle:hover{border-color:var(--ink);color:var(--ink);}
@@ -497,7 +502,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.49.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.50.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -672,7 +677,7 @@
     {key:'fichas',      color:'c1', icon:'📋', label:'Fichas del día',        hint:'Cuentas que vencen hoy. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'mora17',      color:'c2', icon:'⏳', label:'Mora 1–7 días',         hint:'Cartera en atraso temprano. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'desembolso',  color:'c4', icon:'💰', label:'Desembolso', shortLabel:'Desemb.', hint:'Real = suma de lo Desembolsado hoy. Compromiso = suma de lo marcado "Por desembolsar" en Crecimiento. Ambos automáticos.', hasTotal:false, unit:'money', auto:true},
-    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila). Total = 2× asesores elegibles (pedido por dirección), se calcula solo.', hasTotal:true,  unit:'count', noCompromiso:true, autoTotal:true, stretchMult:APPROVALS_MULT_PROPIA},
+    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila). Total = 2× asesores elegibles (cover mínimo que pide dirección), se calcula solo. Abajo también se ve tu % contra la meta de 3× asesores, con el mismo número que captures aquí.', hasTotal:true,  unit:'count', noCompromiso:true, autoTotal:true, stretchMult:APPROVALS_MULT_PROPIA},
     {key:'mora8mas',    color:'c6', icon:'📉', label:'Mora 8+ días ($)',      hint:'Pesos comprometidos a bajar de la cartera vencida mayor a 8 días — no folios, dinero.', hasTotal:false, unit:'money', signedColor:true},
   ];
   const METRIC_BY_KEY = Object.fromEntries(METRICS.map(m=>[m.key,m]));
@@ -842,6 +847,12 @@
     if(!compromiso) return null;
     return Math.min(999, Math.round(((real||0)/compromiso)*100));
   }
+  // Para la meta propia de Approvals usamos un decimal (igual que la Consola GP) —
+  // con números chicos por asesor, redondear al entero perdía demasiada precisión.
+  function pctOf1(real, total){
+    if(!total) return null;
+    return Math.min(999, (((real||0)/total)*100)).toFixed(1);
+  }
   // Fichas del día no lleva Compromiso — su % es Real/Total en vez de Real/Compromiso,
   // pero usa las mismas franjas de color (gapClass/pctOf) tomando "total" como base.
   function gapClassVsTotal(real, total){ return gapClass(real, total); }
@@ -954,6 +965,8 @@
       const totalVal = isMoney ? fmtMoneyEdit(d.total) : (d.total??'');
       const totalDisabled = m.autoTotal ? true : (m.noCompromiso ? false : locked);
       const stretchVal = m.stretchMult ? (headcountSemana(mondayOf(fechaInput.value)) * m.stretchMult) : null;
+      const stretchPct = stretchVal!==null ? pctOf1(d.real, stretchVal) : null;
+      const stretchGap = stretchVal!==null ? gapClassVsTotal(d.real, stretchVal) : '';
       // Solo en Mora 8+: el color del número refleja su signo (negativo=bajó=bien,
       // positivo=subió=mal), no la comparación contra el compromiso como las demás filas.
       const signedRealCls = m.signedColor ? (Number(d.real)<0 ? ' sr-real-good' : (Number(d.real)>0 ? ' sr-real-bad' : '')) : '';
@@ -974,7 +987,7 @@
         <span class="sr-label">${m.shortLabel || m.label}</span>
         <span class="sr-nums">${numsHTML}</span>
         <span class="sr-pctchip">${pct===null? ((locked||m.auto||m.noCompromiso)?'—':'') : pct+'%'}</span>
-        ${stretchVal!==null ? `<span class="sr-stretch" title="Meta propia (no cuenta para el %, solo para no quedarnos en el mínimo): ${m.stretchMult}× asesores elegibles">meta propia: ${stretchVal}</span>` : ''}
+        ${stretchVal!==null ? `<span class="sr-stretch ${stretchGap}" title="Meta real que nos pidieron (no es el mínimo de dirección): ${m.stretchMult}× asesores elegibles. Usa el mismo número de Approvals que captures arriba.">meta: ${d.real??0}/${stretchVal} <b>${stretchPct===null?'—':stretchPct+'%'}</b></span>` : ''}
       </div>`;
     }).join('');
 
@@ -1094,6 +1107,19 @@
         realInput.classList.remove('sr-real-good','sr-real-bad');
         if(Number(d.real)<0) realInput.classList.add('sr-real-good');
         else if(Number(d.real)>0) realInput.classList.add('sr-real-bad');
+      }
+    }
+    // Approvals: el badge de "meta" (3× asesores) usa el mismo Real que se acaba
+    // de teclear arriba — se repinta junto con el chip principal (cover).
+    if(m && m.stretchMult){
+      const stretchEl = row.querySelector('.sr-stretch');
+      if(stretchEl){
+        const stretchVal = headcountSemana(mondayOf(fechaInput.value)) * m.stretchMult;
+        const stretchPct = pctOf1(d.real, stretchVal);
+        const stretchGap = gapClassVsTotal(d.real, stretchVal);
+        stretchEl.classList.remove('gap-ok','gap-warn','gap-low','gap-empty');
+        stretchEl.classList.add(stretchGap);
+        stretchEl.innerHTML = `meta: ${d.real??0}/${stretchVal} <b>${stretchPct===null?'—':stretchPct+'%'}</b>`;
       }
     }
   }
