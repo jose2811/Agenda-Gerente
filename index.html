@@ -289,6 +289,8 @@
   .team-item-cumple.unset{text-decoration:none;opacity:.6;}
   .team-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;}
   .team-badge.training{background:var(--warn-soft, #FFF3D6);color:var(--warn, #8A5D00);}
+  .team-badge.ausente{background:var(--neutral-soft,#EEE);color:var(--muted);}
+  .team-item-ausencia{font-size:11px;font-family:inherit;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);padding:2px 4px;max-width:150px;}
   .team-badge.elegible{background:var(--ok-soft, #E7F1EE);color:var(--ok, #1F6F5C);}
   .team-item-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:4px 6px;white-space:nowrap;}
   .team-item-del:hover{color:var(--danger);}
@@ -502,7 +504,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.50.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.51.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -1626,7 +1628,7 @@
       const list = JSON.parse(raw);
       // Compatibilidad: asesores capturados antes de que existiera fecha de alta/baja
       // nacen activos y sin fecha (no cuentan para las metas hasta que se las pongas).
-      return list.map(a=>({ ...a, activo: a.activo!==false, fechaAlta: a.fechaAlta || null, fechaNacimiento: a.fechaNacimiento || null }));
+      return list.map(a=>({ ...a, activo: a.activo!==false, fechaAlta: a.fechaAlta || null, fechaNacimiento: a.fechaNacimiento || null, ausencia: a.ausencia || null }));
     }catch(e){ console.error(e); } }
     return [];
   }
@@ -1649,6 +1651,8 @@
   // una fecha de alta y esa fecha dice que todavía está en capacitación (menos de 15 días).
   function esElegible(a, refDateStr){
     if(!a.activo) return false;
+    // Vacaciones / baja programada: sigue en el equipo, pero no suma para las metas.
+    if(a.ausencia) return false;
     if(!a.fechaAlta) return true;
     const d = antiguedadDias(a.fechaAlta, refDateStr);
     return d===null || d>=ANTIGUEDAD_MIN_DIAS;
@@ -1712,7 +1716,7 @@
     const hoy = fechaInput.value;
     const elegiblesHoy = countAsesoresElegibles(hoy);
     const sinFecha = asesores.filter(a=>a.activo && !a.fechaAlta).length;
-    hcBox.innerHTML = `Asesores que ya cuentan para las metas automáticas hoy: <b>${elegiblesHoy}</b> (activos, y con 15+ días de antigüedad si le pusiste fecha de alta).`
+    hcBox.innerHTML = `Asesores que ya cuentan para las metas automáticas hoy: <b>${elegiblesHoy}</b> (activos, con 15+ días si le pusiste fecha de alta, y sin vacaciones ni baja programada).`
       + (sinFecha ? ` <span style="color:var(--muted);">${sinFecha} asesor(es) sin fecha de alta capturada — se cuentan igual; ponle fecha solo si de verdad sigue en capacitación.</span>` : '');
     if(!asesores.length){
       wrap.innerHTML = `<div class="team-empty">Todavía no capturas a nadie de tu equipo. Agrega el primer nombre arriba.</div>`;
@@ -1728,7 +1732,9 @@
       const count = crecList.filter(e=>e.asesorId===a.id).length;
       const dias = antiguedadDias(a.fechaAlta, hoy);
       let badgeHTML = '';
-      if(!a.fechaAlta){
+      if(a.ausencia){
+        badgeHTML = `<span class="team-badge ausente">${a.ausencia==='vacaciones'?'🏖 de vacaciones':'📤 baja programada'} · fuera de la meta</span>`;
+      } else if(!a.fechaAlta){
         badgeHTML = `<span class="team-badge elegible">✓ cuenta (sin fecha capturada)</span>`;
       } else if(dias < ANTIGUEDAD_MIN_DIAS){
         badgeHTML = `<span class="team-badge training">🎓 en capacitación (${dias}d)</span>`;
@@ -1745,6 +1751,11 @@
             <button type="button" class="team-item-alta${a.fechaAlta?'':' unset'}" data-action="team-edit-alta" title="Cambiar fecha de alta">📅 alta: ${altaLabel}</button>
             <button type="button" class="team-item-cumple${a.fechaNacimiento?'':' unset'}" data-action="team-edit-cumple" title="Cambiar fecha de cumpleaños">🎂 ${cumpleLabel}</button>
             ${a.activo ? badgeHTML : ''}
+            ${a.activo ? `<select class="team-item-ausencia" data-action="team-set-ausencia" title="Quítalo de la meta mientras esté de vacaciones o con baja programada">
+              <option value=""${!a.ausencia?' selected':''}>Cuenta para la meta</option>
+              <option value="vacaciones"${a.ausencia==='vacaciones'?' selected':''}>🏖 Vacaciones</option>
+              <option value="baja_prog"${a.ausencia==='baja_prog'?' selected':''}>📤 Baja programada</option>
+            </select>` : ''}
             <span class="team-item-count">${count} prospecto(s)</span>
           </div>
         </div>
@@ -1781,6 +1792,17 @@
         a.fechaNacimiento = trimmed || null;
         saveAsesores();
         renderTeam();
+      });
+    });
+    wrap.querySelectorAll('[data-action="team-set-ausencia"]').forEach(sel=>{
+      sel.addEventListener('change', ()=>{
+        const id = sel.closest('.team-item').dataset.id;
+        const a = asesores.find(x=>x.id===id);
+        a.ausencia = sel.value || null;
+        saveAsesores();
+        renderTeam();
+        refreshWeekly();
+        renderMetrics();
       });
     });
     wrap.querySelectorAll('[data-action="team-toggle-activo"]').forEach(btn=>{
