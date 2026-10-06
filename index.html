@@ -10,7 +10,9 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 <meta name="theme-color" content="#1C2B39">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Fuentes NO bloqueantes: si la red del teléfono está "conectada" pero no responde, la app abre igual con fuente del sistema -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap"></noscript>
 
 <style>
   :root{
@@ -504,7 +506,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.51.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.51.1 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
