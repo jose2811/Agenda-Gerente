@@ -148,6 +148,22 @@
   /* ---------- Meta semanal de desembolso ---------- */
   .weekly{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin-bottom:14px;}
   .weekly-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:10px;}
+  .sol-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin:14px 0 4px;}
+  .sol-card h3{margin:0 0 3px;font-size:13px;font-weight:700;}
+  .sol-sub{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:10px;}
+  .sol-add{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .sol-add-row{display:flex;gap:6px;}
+  .sol-add select,.sol-add textarea,.sol-edit-input{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 8px;background:#fff;color:var(--ink);}
+  .sol-add textarea,.sol-edit-input{width:100%;min-height:54px;resize:vertical;box-sizing:border-box;}
+  .sol-item{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#fdfdfc;}
+  .sol-item.old{border-left-color:var(--danger);}
+  .sol-top{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:3px;}
+  .sol-top .sol-age{margin-left:auto;}
+  .sol-txt{font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
+  .sol-btns{display:flex;gap:6px;margin-top:7px;}
+  .sol-btns .btn{padding:5px 9px;font-size:11.5px;}
+  .sol-done-toggle{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:4px 0;font-family:inherit;text-decoration:underline;}
+  .sol-item.done{border-left-color:var(--ok);opacity:.75;}
   .weekly-head h3{margin:0;font-size:13px;font-weight:700;}
   .weekly-edit-toggle{font-size:11px;color:var(--m4);cursor:pointer;font-weight:600;background:none;border:none;font-family:inherit;padding:0;}
   .weekly-set{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
@@ -468,6 +484,26 @@
     </div>
     <p class="pdf-hint">El PDF trae el detalle completo: Marcador, meta semanal, y Crecimiento de cartera con activos, resueltos y todos los comentarios — para planear la junta de la mañana o revisar el avance del día.</p>
 
+    <div class="sol-card" id="solCard">
+      <h3>📌 Solicitudes y pendientes con GP</h3>
+      <div class="sol-sub">Apoyos que necesitas de tu GP: seguimiento a un ticket, un error de incentivo, algún pendiente. Se quedan aquí hasta que los marques como resueltos, y le llegan a tu GP cuando mandas tus datos.</div>
+      <div class="sol-add">
+        <div class="sol-add-row">
+          <select id="solTipo">
+            <option value="ticket">🎫 Ticket</option>
+            <option value="incentivo">💰 Incentivo</option>
+            <option value="apoyo">🙋 Apoyo</option>
+            <option value="otro">📝 Otro</option>
+          </select>
+          <button class="btn btn-primary" id="solAddBtn" style="flex:1;">+ Agregar</button>
+        </div>
+        <textarea id="solTexto" placeholder="¿Qué necesitas? (ej. Ticket #123 de la cuenta de María López no avanza)"></textarea>
+      </div>
+      <div id="solList"></div>
+      <button class="sol-done-toggle" id="solDoneToggle" style="display:none;"></button>
+      <div id="solDoneList" style="display:none;"></div>
+    </div>
+
     <button class="btn btn-gp" id="btnExportJson" style="width:100%;margin-top:8px;">📲 Enviar datos a GP</button>
     <p class="pdf-hint" id="exportHint">Se manda solo a la consola de tu GP. Si no hay internet en ese momento, se descarga el archivo para que lo mandes por WhatsApp como antes.</p>
 
@@ -506,7 +542,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.52.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.53.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -1427,7 +1463,7 @@
   $('#wipeConfirm').addEventListener('click', ()=>{
     try{
       Object.keys(localStorage).forEach(k=>{
-        if(k.startsWith('gerente:marcador:') || k.startsWith('gerente:metaSemanal:') || k==='gerente:crecimiento' || k==='gerente:asesores'){
+        if(k.startsWith('gerente:marcador:') || k.startsWith('gerente:metaSemanal:') || k==='gerente:crecimiento' || k==='gerente:asesores' || k==='gerente:solicitudes'){
           localStorage.removeItem(k);
         }
       });
@@ -1451,6 +1487,7 @@
       asesores: asesores,
       metasSemanales: {},
       compromisoLog: {},
+      solicitudes: solicitudesParaExport(),
     };
     try{
       Object.keys(localStorage).forEach(k=>{
@@ -1619,7 +1656,7 @@
         ()=>{
           try{
             Object.keys(localStorage).forEach(k=>{
-              if(k.startsWith('gerente:marcador:') || k.startsWith('gerente:metaSemanal:') || k==='gerente:crecimiento' || k==='gerente:asesores' || k==='gerente:config'){
+              if(k.startsWith('gerente:marcador:') || k.startsWith('gerente:metaSemanal:') || k==='gerente:crecimiento' || k==='gerente:asesores' || k==='gerente:solicitudes' || k==='gerente:config'){
                 localStorage.removeItem(k);
               }
             });
@@ -1632,6 +1669,7 @@
             });
             lsSet('gerente:crecimiento', JSON.stringify(data.crecimiento||[]));
             lsSet('gerente:asesores', JSON.stringify(data.asesores||[]));
+            if(Array.isArray(data.solicitudes)) lsSet(SOL_KEY, JSON.stringify(data.solicitudes));
             lsSet('gerente:lastModified', importedAt || new Date().toISOString());
             toast('Agenda cargada — actualizando...');
             setTimeout(()=> location.reload(), 700);
@@ -2956,6 +2994,90 @@
     renderStaleByAsesor(); // refresca por si algo cambió desde la última vez que se abrió
   });
 
+
+  // ================= SOLICITUDES Y PENDIENTES CON GP =================
+  // Lista libre que el gerente mantiene para no perder apoyos que le debe su GP
+  // (tickets, incentivos, pendientes). Es editable y NO caduca sola: se queda hasta
+  // que el gerente la marca como resuelta. Viaja en el envío a la consola (solicitudes).
+  const SOL_KEY = 'gerente:solicitudes';
+  const SOL_TIPOS = {ticket:'🎫 Ticket', incentivo:'💰 Incentivo', apoyo:'🙋 Apoyo', otro:'📝 Otro'};
+  let solicitudes = [];
+  let solDoneOpen = false;
+  let solEditingId = null;
+  function loadSolicitudes(){
+    try{ const a = JSON.parse(lsGet(SOL_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+  }
+  function saveSolicitudes(){ lsSet(SOL_KEY, JSON.stringify(solicitudes)); touchLastModified(); }
+  function solDiasDesde(iso){
+    const d = new Date(iso); if(isNaN(d)) return 0;
+    const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const n = new Date(); const b = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    return Math.max(0, Math.round((b-a)/86400000));
+  }
+  function solEdadTxt(iso){ const n = solDiasDesde(iso); return n===0 ? 'hoy' : n===1 ? 'hace 1 día' : 'hace '+n+' días'; }
+  function renderSolicitudes(){
+    const abiertas = solicitudes.filter(x=>x.estado!=='resuelta').sort((a,b)=> (a.creado||'').localeCompare(b.creado||''));
+    const resueltas = solicitudes.filter(x=>x.estado==='resuelta').sort((a,b)=> (b.resueltoEn||'').localeCompare(a.resueltoEn||''));
+    const list = $('#solList');
+    list.innerHTML = abiertas.length ? abiertas.map(x=>{
+      const viejo = solDiasDesde(x.creado) >= 3;
+      const editing = solEditingId===x.id;
+      return `<div class="sol-item ${viejo?'old':''}" data-id="${x.id}">
+        <div class="sol-top"><span>${SOL_TIPOS[x.tipo]||SOL_TIPOS.otro}</span><span class="sol-age">${solEdadTxt(x.creado)}</span></div>
+        ${editing
+          ? `<textarea class="sol-edit-input">${escapeHTML(x.texto)}</textarea>
+             <div class="sol-btns"><button class="btn btn-primary" data-sol="save">Guardar</button><button class="btn btn-secondary" data-sol="cancel">Cancelar</button></div>`
+          : `<div class="sol-txt">${escapeHTML(x.texto)}</div>
+             <div class="sol-btns"><button class="btn btn-secondary" data-sol="edit">✏️ Editar</button><button class="btn btn-primary" data-sol="done">✓ Resuelta</button><button class="btn btn-secondary" data-sol="del" title="Borrar">🗑</button></div>`}
+      </div>`;
+    }).join('') : `<div class="sol-sub" style="margin:0 0 6px;">Sin pendientes abiertos 👌</div>`;
+    const tg = $('#solDoneToggle'), dl = $('#solDoneList');
+    tg.style.display = resueltas.length ? '' : 'none';
+    tg.textContent = (solDoneOpen?'▴ Ocultar':'▾ Ver')+' resueltas ('+resueltas.length+')';
+    dl.style.display = (solDoneOpen && resueltas.length) ? '' : 'none';
+    dl.innerHTML = resueltas.map(x=>`<div class="sol-item done" data-id="${x.id}">
+        <div class="sol-top"><span>${SOL_TIPOS[x.tipo]||SOL_TIPOS.otro}</span><span class="sol-age">resuelta ${solEdadTxt(x.resueltoEn||x.creado)}</span></div>
+        <div class="sol-txt">${escapeHTML(x.texto)}</div>
+        <div class="sol-btns"><button class="btn btn-secondary" data-sol="reopen">↩ Reabrir</button><button class="btn btn-secondary" data-sol="del" title="Borrar">🗑</button></div>
+      </div>`).join('');
+  }
+  function solicitudesParaExport(){
+    // Abiertas siempre; resueltas solo las de los últimos 14 días (para no inflar el envío).
+    return solicitudes.filter(x=> x.estado!=='resuelta' || solDiasDesde(x.resueltoEn||x.creado) <= 14);
+  }
+  $('#solAddBtn').addEventListener('click', ()=>{
+    const ta = $('#solTexto');
+    const texto = ta.value.trim();
+    if(!texto){ ta.focus(); toast('Escribe qué necesitas'); return; }
+    const now = new Date().toISOString();
+    solicitudes.push({id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), tipo:$('#solTipo').value, texto, creado:now, actualizado:now, estado:'abierta'});
+    saveSolicitudes(); ta.value=''; renderSolicitudes();
+    toast('Pendiente agregado — se manda a GP en tu siguiente envío');
+  });
+  $('#solCard').addEventListener('click', ev=>{
+    const btn = ev.target.closest('[data-sol]'); if(!btn) return;
+    const item = btn.closest('.sol-item'); const x = solicitudes.find(s=>s.id===item.dataset.id); if(!x) return;
+    const act = btn.dataset.sol;
+    if(act==='edit'){ solEditingId = x.id; renderSolicitudes(); const t = document.querySelector('.sol-edit-input'); if(t) t.focus(); return; }
+    if(act==='cancel'){ solEditingId = null; renderSolicitudes(); return; }
+    if(act==='save'){
+      const v = item.querySelector('.sol-edit-input').value.trim();
+      if(!v){ toast('El texto no puede quedar vacío'); return; }
+      if(v!==x.texto){ x.texto = v; x.actualizado = new Date().toISOString(); }
+      solEditingId = null; saveSolicitudes(); renderSolicitudes(); return;
+    }
+    if(act==='done'){ x.estado='resuelta'; x.resueltoEn=new Date().toISOString(); x.actualizado=x.resueltoEn; }
+    if(act==='reopen'){ x.estado='abierta'; delete x.resueltoEn; x.actualizado=new Date().toISOString(); }
+    if(act==='del'){
+      showCrecConfirm('Borrar pendiente', `¿Borrar este pendiente? Si ya se resolvió, mejor márcalo como resuelto.`, 'Sí, borrar', ()=>{
+        solicitudes = solicitudes.filter(s=>s.id!==x.id); saveSolicitudes(); renderSolicitudes();
+      });
+      return;
+    }
+    saveSolicitudes(); renderSolicitudes();
+  });
+  $('#solDoneToggle').addEventListener('click', ()=>{ solDoneOpen = !solDoneOpen; renderSolicitudes(); });
+
   function init(){
     const cfg = loadConfig();
     if(cfg){ gerenteInput.value = cfg.gerente||''; sucursalInput.value = cfg.sucursal||''; }
@@ -2968,6 +3090,8 @@
     asesores = loadAsesores(); // antes de crecList: las tarjetas y el filtro necesitan la lista de nombres
     crecList = loadCrecList(); // primero Crecimiento: el Marcador depende de él (Desembolso Real es automático)
     purgeOldResolvedCrec();
+    solicitudes = loadSolicitudes();
+    renderSolicitudes();
     marcador = loadMarcador(fechaInput.value);
     renderTeam();
     renderCrecimiento();
