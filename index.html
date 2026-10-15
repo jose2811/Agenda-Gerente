@@ -542,7 +542,7 @@
   </div>
 
   <div class="footer">
-    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.53.0 —
+    — created by <b>Joe Fdz &amp; Claude !!</b> · v1.54.0 —
     <button class="footer-danger-link" id="btnWipeAll">🧹 Borrar todos los datos de prueba</button>
   </div>
 
@@ -711,13 +711,18 @@
   // elegible (15+ días, congelado el lunes — ver headcountSemana) y ese es el número
   // contra el que se calcula el %. La meta propia (3 por asesor) es más exigente a
   // propósito, nada más para que la oficina no se quede en el mínimo — no afecta el %.
-  const APPROVALS_MULT_DIRECCION = 2;
-  const APPROVALS_MULT_PROPIA = 3;
+  // A partir del 15/oct/2026 dirección subió el piso: cover 3× y meta 4× por asesor
+  // (antes 2× y 3×). Los días anteriores conservan su multiplicador de entonces para
+  // que el historial no cambie retroactivamente.
+  const APPROVALS_FECHA_CAMBIO = '2026-10-15';
+  function approvalsMults(dateStr){
+    return (dateStr||'') >= APPROVALS_FECHA_CAMBIO ? {cover:3, meta:4} : {cover:2, meta:3};
+  }
   const METRICS = [
     {key:'fichas',      color:'c1', icon:'📋', label:'Fichas del día',        hint:'Cuentas que vencen hoy. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'mora17',      color:'c2', icon:'⏳', label:'Mora 1–7 días',         hint:'Cartera en atraso temprano. % = Real/Total (sin compromiso en esta fila).', hasTotal:true,  unit:'count', noCompromiso:true},
     {key:'desembolso',  color:'c4', icon:'💰', label:'Desembolso', shortLabel:'Desemb.', hint:'Real = suma de lo Desembolsado hoy. Compromiso = suma de lo marcado "Por desembolsar" en Crecimiento. Ambos automáticos.', hasTotal:false, unit:'money', auto:true},
-    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila). Total = 2× asesores elegibles (cover mínimo que pide dirección), se calcula solo. Abajo también se ve tu % contra la meta de 3× asesores, con el mismo número que captures aquí.', hasTotal:true,  unit:'count', noCompromiso:true, autoTotal:true, stretchMult:APPROVALS_MULT_PROPIA},
+    {key:'prospeccion', color:'c5', icon:'🔎', label:'Approvals',             hint:'Consultas enviadas a análisis. % = Real/Total (sin compromiso en esta fila). Total = 3× asesores elegibles (cover mínimo que pide dirección), se calcula solo. Abajo también se ve tu % contra la meta de 4× asesores, con el mismo número que captures aquí.', hasTotal:true,  unit:'count', noCompromiso:true, autoTotal:true, stretchMult:true},
     {key:'mora8mas',    color:'c6', icon:'📉', label:'Mora 8+ días ($)',      hint:'Pesos comprometidos a bajar de la cartera vencida mayor a 8 días — no folios, dinero.', hasTotal:false, unit:'money', signedColor:true},
   ];
   const METRIC_BY_KEY = Object.fromEntries(METRICS.map(m=>[m.key,m]));
@@ -949,7 +954,7 @@
     marcador.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(fechaInput.value);
     registrarCambioCompromiso(fechaInput.value, marcador.metrics.desembolso.compromiso);
     const hc = headcountSemana(mondayOf(fechaInput.value));
-    marcador.metrics.prospeccion.total = hc * APPROVALS_MULT_DIRECCION;
+    marcador.metrics.prospeccion.total = hc * approvalsMults(fechaInput.value).cover;
   }
   // Las cuentas que forman el Compromiso de hoy pero NO llegaron a Desembolsado:
   // siguen abiertas (se quedaron en mesa) o se rechazaron hoy mismo. Esta es
@@ -1024,7 +1029,7 @@
       const compromisoDisabled = m.auto ? true : locked;
       const totalVal = isMoney ? fmtMoneyEdit(d.total) : (d.total??'');
       const totalDisabled = m.autoTotal ? true : (m.noCompromiso ? false : locked);
-      const stretchVal = m.stretchMult ? (headcountSemana(mondayOf(fechaInput.value)) * m.stretchMult) : null;
+      const stretchVal = m.stretchMult ? (headcountSemana(mondayOf(fechaInput.value)) * approvalsMults(fechaInput.value).meta) : null;
       const stretchPct = stretchVal!==null ? pctOf1(d.real, stretchVal) : null;
       const stretchGap = stretchVal!==null ? gapClassVsTotal(d.real, stretchVal) : '';
       // Solo en Mora 8+: el color del número refleja su signo (negativo=bajó=bien,
@@ -1039,7 +1044,7 @@
         ${(compromisoDisabled && !m.auto) ? `<button type="button" class="sr-sign-toggle" data-action="edit-locked-compromiso" data-key="${m.key}" title="El compromiso ya quedó fijado — para cambiarlo hay que anotar el motivo">✏️</button>` : ''}`}
         ${m.hasTotal ? `<span class="sr-sep">/</span>
         ${dollarTotal}<input type="${inType}" ${minAttr} inputmode="${inMode}" class="sr-input sr-total${moneyCls}" data-field="total" data-key="${m.key}" value="${totalVal}" ${totalDisabled?'disabled':''} placeholder="0">` : ''}
-        ${(m.auto || m.autoTotal) ? `<span class="sr-auto-tag" title="${m.autoTotal ? 'Se calcula solo: '+APPROVALS_MULT_DIRECCION+'× asesores elegibles' : 'Se calcula solo desde Crecimiento'}">auto</span>` : ''}
+        ${(m.auto || m.autoTotal) ? `<span class="sr-auto-tag" title="${m.autoTotal ? 'Se calcula solo: '+approvalsMults(fechaInput.value).cover+'× asesores elegibles' : 'Se calcula solo desde Crecimiento'}">auto</span>` : ''}
       `;
       return `
       <div class="scorerow ${m.color} ${gclass}" data-row="${m.key}" title="${escapeHTML(m.hint)}">
@@ -1047,7 +1052,7 @@
         <span class="sr-label">${m.shortLabel || m.label}</span>
         <span class="sr-nums">${numsHTML}</span>
         <span class="sr-pctchip">${pct===null? ((locked||m.auto||m.noCompromiso)?'—':'') : pct+'%'}</span>
-        ${stretchVal!==null ? `<span class="sr-stretch ${stretchGap}" title="Meta real que nos pidieron (no es el mínimo de dirección): ${m.stretchMult}× asesores elegibles. Usa el mismo número de Approvals que captures arriba.">meta: ${d.real??0}/${stretchVal} <b>${stretchPct===null?'—':stretchPct+'%'}</b></span>` : ''}
+        ${stretchVal!==null ? `<span class="sr-stretch ${stretchGap}" title="Meta real que nos pidieron (no es el mínimo de dirección): ${approvalsMults(fechaInput.value).meta}× asesores elegibles. Usa el mismo número de Approvals que captures arriba.">meta: ${d.real??0}/${stretchVal} <b>${stretchPct===null?'—':stretchPct+'%'}</b></span>` : ''}
       </div>`;
     }).join('');
 
@@ -1174,7 +1179,7 @@
     if(m && m.stretchMult){
       const stretchEl = row.querySelector('.sr-stretch');
       if(stretchEl){
-        const stretchVal = headcountSemana(mondayOf(fechaInput.value)) * m.stretchMult;
+        const stretchVal = headcountSemana(mondayOf(fechaInput.value)) * approvalsMults(fechaInput.value).meta;
         const stretchPct = pctOf1(d.real, stretchVal);
         const stretchGap = gapClassVsTotal(d.real, stretchVal);
         stretchEl.classList.remove('gap-ok','gap-warn','gap-low','gap-empty');
@@ -1516,7 +1521,9 @@
           dia.metrics.desembolso.compromiso = calcPorDesembolsarCompromiso(date);
         }
         if(dia && dia.metrics && dia.metrics.prospeccion){
-          dia.metrics.prospeccion.total = headcountSemana(mondayOf(date)) * APPROVALS_MULT_DIRECCION;
+          const hcDia = headcountSemana(mondayOf(date)), mu = approvalsMults(date);
+          dia.metrics.prospeccion.total = hcDia * mu.cover;
+          dia.metrics.prospeccion.totalMeta = hcDia * mu.meta;   // la consola lo usa tal cual (ya no lo deriva)
         }
       });
     }catch(e){ console.error(e); }
